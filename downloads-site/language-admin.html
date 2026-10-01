@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>JARVIS · Language administration</title>
+  <style>
+    :root{color-scheme:dark;--bg:#070c12;--card:#101923;--line:#263746;--text:#eef6ff;--muted:#9aabba;--cyan:#53d7e8;--red:#ff7474;--green:#80e0aa}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#102331,var(--bg) 58%);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+    main{max-width:1100px;margin:auto;padding:28px 18px 64px}h1,h2,h3,p{margin-top:0}h1{font-size:clamp(26px,5vw,38px);letter-spacing:.02em}h2{font-size:21px}h3{font-size:17px}.muted{color:var(--muted)}.eyebrow{color:var(--cyan);text-transform:uppercase;letter-spacing:.16em;font-size:12px;font-weight:700}
+    .card{background:linear-gradient(145deg,#111d28,#0d151e);border:1px solid var(--line);border-radius:18px;padding:20px;margin:18px 0;box-shadow:0 12px 32px #0004}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:13px}.field{display:grid;gap:6px}label{font-size:13px;color:#bdccda}input,textarea,select{width:100%;min-height:42px;padding:9px 11px;border:1px solid #34495a;border-radius:10px;background:#09121a;color:var(--text);font:inherit}textarea{min-height:84px;resize:vertical}input[type=checkbox]{width:18px;min-height:18px;accent-color:var(--cyan)}button{border:1px solid #386070;background:#16303a;color:var(--text);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}button:hover{border-color:var(--cyan);background:#1b3b46}button.danger{border-color:#713b43;background:#321a20}button:disabled{opacity:.5;cursor:wait}.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.between{display:flex;justify-content:space-between;align-items:center;gap:14px}.toggle{display:flex;gap:8px;align-items:center}.language{border-top:1px solid var(--line);padding:20px 0}.voicegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:13px}.voicebox{border:1px solid #30414f;border-radius:13px;padding:14px;background:#0b141c}.status{min-height:24px;color:var(--muted);white-space:pre-wrap}.status.error{color:var(--red)}.status.ok{color:var(--green)}.hidden{display:none!important}.pill{border:1px solid var(--line);border-radius:20px;padding:3px 9px;color:var(--muted);font-size:12px}.small{font-size:12px}.actions{margin-top:12px}.hr{border:0;border-top:1px solid var(--line);margin:20px 0}
+    @media(max-width:560px){main{padding:20px 12px 40px}.card{padding:15px}.between{align-items:flex-start;flex-direction:column}}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">JARVIS · Administration</div>
+  <h1>Languages &amp; voices</h1>
+  <p class="muted">Manage the active language catalog and exact Android TTS voice IDs. User apps receive only enabled languages and mappings. Voice IDs must exactly match a target device's installed Android TTS engine.</p>
+
+  <section class="card" id="login-card">
+    <h2>Administrator sign in</h2>
+    <p class="muted">Use the project's public Supabase URL and anon/publishable key. Access requires a signed-in account whose trusted <code>app_metadata.role</code> is <code>admin</code>. The password and access token are held only in this page's memory.</p>
+    <div class="grid">
+      <div class="field"><label for="project-url">Supabase project URL</label><input id="project-url" type="url" placeholder="https://your-project.supabase.co" autocomplete="url"></div>
+      <div class="field"><label for="anon-key">Public anon / publishable key</label><input id="anon-key" type="password" autocomplete="off"></div>
+      <div class="field"><label for="email">Administrator email</label><input id="email" type="email" autocomplete="username"></div>
+      <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password"></div>
+    </div>
+    <div class="row actions"><button id="login">Sign in</button><span class="status" id="login-status" role="status"></span></div>
+  </section>
+
+  <section class="card hidden" id="admin-card">
+    <div class="between"><div><h2>Active catalog</h2><p class="muted">Changes are saved to the database and become available to the User App on its next configuration refresh.</p></div><div class="row"><span class="pill">Admin session</span><button class="danger" id="logout">Sign out</button></div></div>
+    <div class="row"><button id="refresh">Refresh from database</button><span id="catalog-status" class="status" role="status"></span></div>
+    <div id="language-list"></div>
+    <hr class="hr">
+    <h2>Add a language</h2>
+    <form id="add-language">
+      <div class="grid">
+        <div class="field"><label for="new-id">Stable ID</label><input id="new-id" required pattern="[a-z][a-z0-9_-]{1,31}" placeholder="e.g. urdu"></div>
+        <div class="field"><label for="new-code">Language code</label><input id="new-code" required pattern="[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*" placeholder="e.g. ur"></div>
+        <div class="field"><label for="new-name">Display name</label><input id="new-name" required maxlength="80" placeholder="e.g. Urdu"></div>
+        <div class="field"><label for="new-response">Response locale tag</label><input id="new-response" required placeholder="e.g. ur-PK"></div>
+        <div class="field"><label for="new-recognition">Recognition locale tag</label><input id="new-recognition" required placeholder="e.g. ur-PK"></div>
+      </div>
+      <div class="field" style="margin-top:12px"><label for="new-rule">Language response instruction</label><textarea id="new-rule" required maxlength="1000" placeholder="Tell JARVIS how to reply in this language."></textarea></div>
+      <div class="row actions"><button type="submit">Add enabled language</button></div>
+    </form>
+  </section>
+</main>
+<script>
+(() => {
+  'use strict';
+  let session = null;
+  let projectUrl = '';
+  let anonKey = '';
+  const $ = (id) => document.getElementById(id);
+  const status = (id, message, error = false) => { const node=$(id); node.textContent=message; node.className=`status${error?' error':message?' ok':''}`; };
+  const cleanUrl = (value) => { const url=new URL(value.trim()); if(url.protocol!=='https:' && url.hostname!=='localhost' && url.hostname!=='127.0.0.1') throw new Error('Use the HTTPS Supabase project URL.'); return url.origin; };
+  async function api(path, options={}) {
+    const response=await fetch(`${projectUrl}/rest/v1/${path}`,{...options,headers:{apikey:anonKey,Authorization:`Bearer ${session.access_token}`,Accept:'application/json',...(options.body?{'Content-Type':'application/json','Prefer':'return=representation'}:{}),...options.headers}});
+    const body=await response.text();
+    if(!response.ok){let message=`Request failed (${response.status}).`;try{const parsed=JSON.parse(body);message=parsed.message||parsed.msg||parsed.hint||parsed.details||message;}catch{}throw new Error(message);}
+    return body?JSON.parse(body):null;
+  }
+  async function loadCatalog() {
+    status('catalog-status','Loading…');
+    try {
+      const [languages,voices]=await Promise.all([
+        api('jarvis_languages?select=*&order=id.asc'),
+        api('jarvis_language_voices?select=*&order=language_id.asc,gender.asc'),
+      ]);
+      render(languages,voices); status('catalog-status',`${languages.length} language(s) loaded.`);
+    } catch(error) { status('catalog-status',error.message,true); }
+  }
+  function render(languages,voices) {
+    const root=$('language-list'); root.replaceChildren();
+    for(const language of languages) {
+      const section=document.createElement('article'); section.className='language';
+      const matching=voices.filter(v=>v.language_id===language.id);
+      const header=document.createElement('div'); header.className='between';
+      const title=document.createElement('div'); title.innerHTML=`<h3>${escapeHtml(language.display_name)} <span class="pill">${escapeHtml(language.language_code)}</span></h3><p class="muted small">${escapeHtml(language.id)} · updated ${escapeHtml(new Date(language.updated_at).toLocaleString())}</p>`;
+      const enable=document.createElement('label'); enable.className='toggle'; const toggle=document.createElement('input');toggle.type='checkbox';toggle.checked=language.enabled;toggle.setAttribute('aria-label',`Enable ${language.display_name}`);enable.append(toggle,document.createTextNode('Enabled'));
+      const def=document.createElement('label'); def.className='toggle';const radio=document.createElement('input');radio.type='radio';radio.name='default-language';radio.checked=language.is_default;radio.disabled=!language.enabled;radio.setAttribute('aria-label',`Set ${language.display_name} as default`);def.append(radio,document.createTextNode('Default'));
+      header.append(title,document.createElement('div'));header.lastChild.className='row';header.lastChild.append(enable,def);section.append(header);
+      const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent='Language details';details.append(summary);
+      const form=document.createElement('div');form.className='grid';
+      const fields=[['Display name','display_name',language.display_name],['Language code','language_code',language.language_code],['Response tag','response_tag',language.response_tag],['Recognition tag','recognition_tag',language.recognition_tag]];
+      const controls={}; for(const [label,key,value] of fields){const wrap=document.createElement('label');wrap.className='field';wrap.textContent=label;const input=document.createElement('input');input.value=value;wrap.append(input);form.append(wrap);controls[key]=input;}
+      const ruleWrap=document.createElement('label');ruleWrap.className='field';ruleWrap.textContent='Language response instruction';const rule=document.createElement('textarea');rule.value=language.script_rule;rule.maxLength=1000;ruleWrap.append(rule);details.append(form,ruleWrap);section.append(details);
+      const voicegrid=document.createElement('div');voicegrid.className='voicegrid';
+      for(const gender of ['male','female']) {
+        const old=matching.find(v=>v.gender===gender);const box=document.createElement('div');box.className='voicebox';box.innerHTML=`<strong>${gender[0].toUpperCase()+gender.slice(1)} voice</strong>`;
+        const name=makeField('Voice name',old?.voice_name||'');const id=makeField('Exact Android voice ID',old?.voice_id||'');const active=document.createElement('label');active.className='toggle';const enabled=document.createElement('input');enabled.type='checkbox';enabled.checked=old?.enabled??false;enabled.disabled=!old;active.append(enabled,document.createTextNode('Mapping enabled'));
+        box.append(name.wrap,id.wrap,active);const save=document.createElement('button');save.textContent=old?'Save voice mapping':'Configure voice';save.disabled=!language.enabled;save.addEventListener('click',()=>saveVoice(language,gender,name.input.value,id.input.value,enabled.checked));box.append(save);if(old){const remove=document.createElement('button');remove.textContent='Remove mapping';remove.className='danger';remove.disabled=!language.enabled;remove.addEventListener('click',()=>removeVoice(language,gender));box.append(remove);}voicegrid.append(box);
+      }
+      section.append(voicegrid);
+      const actions=document.createElement('div');actions.className='row actions';const save=document.createElement('button');save.textContent='Save language';save.addEventListener('click',()=>saveLanguage(language,{...Object.fromEntries(Object.entries(controls).map(([k,v])=>[k,v.value])),script_rule:rule.value,enabled:toggle.checked,is_default:radio.checked}));
+      const remove=document.createElement('button');remove.textContent='Remove language';remove.className='danger';remove.addEventListener('click',()=>removeLanguage(language));actions.append(save,remove);section.append(actions);
+      toggle.addEventListener('change',()=>saveLanguage(language,{...language,enabled:toggle.checked,is_default:radio.checked}));
+      radio.addEventListener('change',()=>{if(radio.checked)saveLanguage(language,{...language,enabled:true,is_default:true});});
+      root.append(section);
+    }
+    if(languages.length===0){const empty=document.createElement('p');empty.className='muted';empty.textContent='No languages found. Add one below.';root.append(empty);}
+  }
+  function makeField(label,value){const wrap=document.createElement('label');wrap.className='field';wrap.textContent=label;const input=document.createElement('input');input.value=value;input.maxLength=255;wrap.append(input);return{wrap,input};}
+  function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  async function saveLanguage(old,value){
+    try{
+      if(old.is_default && !value.enabled){status('catalog-status','Choose another enabled language as default before disabling this one.',true);await loadCatalog();return;}
+      if(value.is_default){await api(`jarvis_languages?is_default=eq.true&id=neq.${encodeURIComponent(old.id)}`,{method:'PATCH',body:JSON.stringify({is_default:false})});value.enabled=true;}
+      await api('jarvis_languages?on_conflict=id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({...value,id:old.id})});
+      if(value.language_code!==old.language_code) await api(`jarvis_language_voices?language_id=eq.${encodeURIComponent(old.id)}`,{method:'PATCH',body:JSON.stringify({language_code:value.language_code})});
+      status('catalog-status',`${value.display_name} saved.`);await loadCatalog();
+    }catch(error){status('catalog-status',error.message,true);}
+  }
+  async function saveVoice(language,gender,name,id,enabled){
+    name=name.trim();id=id.trim();if(!name||!id){status('catalog-status','Voice name and exact voice ID are required.',true);return;}
+    try{await api('jarvis_language_voices?on_conflict=language_id%2Cgender',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({language_id:language.id,language_code:language.language_code,gender,voice_id:id,voice_name:name,enabled,is_primary:true})});status('catalog-status',`${language.display_name} ${gender} voice saved.`);await loadCatalog();}catch(error){status('catalog-status',error.message,true);}
+  }
+  async function removeLanguage(language){if(language.is_default){status('catalog-status','Choose another enabled language as default before removing this one.',true);return;}if(!confirm(`Remove ${language.display_name} and its configured voices?`))return;try{await api(`jarvis_languages?id=eq.${encodeURIComponent(language.id)}`,{method:'DELETE'});status('catalog-status',`${language.display_name} removed.`);await loadCatalog();}catch(error){status('catalog-status',error.message,true);}}
+  async function removeVoice(language,gender){if(!confirm(`Remove the ${gender} voice mapping for ${language.display_name}?`))return;try{await api(`jarvis_language_voices?language_id=eq.${encodeURIComponent(language.id)}&gender=eq.${gender}`,{method:'DELETE'});status('catalog-status',`${language.display_name} ${gender} mapping removed.`);await loadCatalog();}catch(error){status('catalog-status',error.message,true);}}
+  $('login').addEventListener('click',async()=>{
+    try{projectUrl=cleanUrl($('project-url').value);anonKey=$('anon-key').value.trim();if(!anonKey)throw new Error('Public project key is required.');status('login-status','Signing in…');const response=await fetch(`${projectUrl}/auth/v1/token?grant_type=password`,{method:'POST',headers:{apikey:anonKey,'Content-Type':'application/json'},body:JSON.stringify({email:$('email').value.trim(),password:$('password').value})});const data=await response.json();if(!response.ok)throw new Error(data.msg||data.message||'Sign-in failed.');if(data.user?.app_metadata?.role!=='admin')throw new Error('This account is not authorized as an administrator.');session=data;$('password').value='';$('login-card').classList.add('hidden');$('admin-card').classList.remove('hidden');await loadCatalog();}catch(error){session=null;status('login-status',error.message,true);}
+  });
+  $('refresh').addEventListener('click',loadCatalog);
+  $('logout').addEventListener('click',()=>{session=null;projectUrl='';anonKey='';$('admin-card').classList.add('hidden');$('login-card').classList.remove('hidden');$('anon-key').value='';$('password').value='';status('login-status','Signed out.');});
+  $('add-language').addEventListener('submit',async(event)=>{
+    event.preventDefault();const value={id:$('new-id').value.trim(),language_code:$('new-code').value.trim(),display_name:$('new-name').value.trim(),response_tag:$('new-response').value.trim(),recognition_tag:$('new-recognition').value.trim(),script_rule:$('new-rule').value.trim(),enabled:true,is_default:false};
+    try{await api('jarvis_languages',{method:'POST',body:JSON.stringify(value)});event.target.reset();status('catalog-status',`${value.display_name} added. Choose a default if this is the first language.`);await loadCatalog();}catch(error){status('catalog-status',error.message,true);}
+  });
+})();
+</script></body></html>
