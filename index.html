@@ -1,15 +1,1401 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="refresh" content="0;url=/admin.html">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex,nofollow" />
   <title>JARVIS Admin</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #05070b;
+      --panel: #0b1018;
+      --panel-2: #101722;
+      --border: rgba(255,255,255,.08);
+      --text: #f4f7fb;
+      --muted: #8b98aa;
+      --cyan: #00d9ff;
+      --cyan-2: #007cff;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 75% 10%, rgba(0,217,255,.08), transparent 28%),
+        radial-gradient(circle at 20% 90%, rgba(0,124,255,.06), transparent 30%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* SIDEBAR */
+
+    .sidebar {
+      width: 250px;
+      border-right: 1px solid var(--border);
+      background: rgba(5,7,11,.88);
+      backdrop-filter: blur(18px);
+      padding: 22px 14px;
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 10px 28px;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(0,217,255,.5);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: var(--cyan);
+      font-weight: 800;
+      box-shadow: 0 0 25px rgba(0,217,255,.12);
+    }
+
+    .brand h1 {
+      font-size: 17px;
+      letter-spacing: 2px;
+    }
+
+    .brand span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    .nav-title {
+      color: #526071;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 8px 12px;
+      margin-top: 8px;
+    }
+
+    .nav button {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      text-align: left;
+      padding: 12px;
+      border-radius: 10px;
+      margin: 3px 0;
+      transition: .2s;
+    }
+
+    .nav button:hover,
+    .nav button.active {
+      color: white;
+      background: rgba(0,217,255,.08);
+    }
+
+    .nav button.active {
+      box-shadow: inset 2px 0 var(--cyan);
+    }
+
+    .nav button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    /* MAIN */
+
+    .main {
+      width: calc(100% - 250px);
+      margin-left: 250px;
+      padding: 28px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .topbar h2 {
+      font-size: 25px;
+    }
+
+    .topbar p {
+      color: var(--muted);
+      margin-top: 5px;
+      font-size: 13px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #b8c2cf;
+      font-size: 13px;
+      text-align: right;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      background: var(--muted);
+      border-radius: 50%;
+      flex: none;
+    }
+
+    .dot.green { background: var(--green); box-shadow: 0 0 12px var(--green); }
+    .dot.red { background: var(--red); box-shadow: 0 0 12px var(--red); }
+    .dot.yellow { background: var(--yellow); box-shadow: 0 0 12px var(--yellow); }
+
+    /* PAGES */
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* CARDS */
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: linear-gradient(
+        145deg,
+        rgba(16,23,34,.94),
+        rgba(8,12,18,.94)
+      );
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 15px 40px rgba(0,0,0,.16);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .stat-sub {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 6px;
+    }
+
+    .section {
+      margin-top: 18px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-head h3 {
+      font-size: 17px;
+    }
+
+    /* MESSAGES */
+
+    .message {
+      font-size: 13px;
+      border-radius: 10px;
+      padding: 11px 13px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: #c6d2df;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .message:empty { display: none; }
+    .message.ok { border-color: rgba(34,197,94,.45); color: #86efac; background: rgba(34,197,94,.08); }
+    .message.error { border-color: rgba(239,68,68,.5); color: #fca5a5; background: rgba(239,68,68,.09); }
+    .message.busy { border-color: rgba(0,217,255,.4); color: #a5f3fc; background: rgba(0,217,255,.07); }
+
+    .inline-status {
+      font-size: 12px;
+      color: var(--muted);
+      min-height: 18px;
+    }
+
+    .inline-status.error { color: #fca5a5; }
+    .inline-status.ok { color: #86efac; }
+
+    /* STATUS */
+
+    .service-list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .service {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.025);
+      padding: 15px;
+      border-radius: 12px;
+    }
+
+    .service-top {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      gap: 10px;
+    }
+
+    .service small {
+      color: var(--muted);
+    }
+
+    .online { color: var(--green); }
+    .offline { color: var(--red); }
+    .unknown { color: var(--yellow); }
+    .muted { color: var(--muted); }
+
+    /* LANGUAGE */
+
+    .language-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .language {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 17px;
+      background: rgba(255,255,255,.025);
+    }
+
+    .language-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .language-name {
+      font-weight: 600;
+    }
+
+    .language-code {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .language-toggles {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #b8c2cf;
+      cursor: pointer;
+    }
+
+    .voicegrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 13px;
+    }
+
+    .voicebox {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px;
+      background: rgba(0,0,0,.25);
+      display: grid;
+      gap: 9px;
+    }
+
+    .voicebox strong {
+      font-size: 13px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: #bdccda;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .field > span {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    select,
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="url"] {
+      width: 100%;
+      background: #080d14;
+      color: white;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 10px;
+      outline: none;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: rgba(0,217,255,.5);
+    }
+
+    select:disabled,
+    input:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    /* SWITCH */
+
+    .switch {
+      position: relative;
+      width: 46px;
+      height: 25px;
+      display: inline-block;
+      flex: none;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .switch input:disabled + .slider {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: #202a37;
+      border-radius: 20px;
+      transition: .2s;
+    }
+
+    .slider:before {
+      content: "";
+      position: absolute;
+      width: 19px;
+      height: 19px;
+      left: 3px;
+      top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: .2s;
+    }
+
+    .switch input:checked + .slider {
+      background: var(--cyan-2);
+    }
+
+    .switch input:checked + .slider:before {
+      transform: translateX(21px);
+    }
+
+    /* BUTTONS */
+
+    .btn {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: white;
+      border-radius: 9px;
+      padding: 10px 15px;
+      transition: .2s;
+    }
+
+    .btn:hover:not(:disabled) {
+      border-color: rgba(0,217,255,.4);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--cyan-2), var(--cyan));
+      color: #001018;
+      border: 0;
+      font-weight: 700;
+    }
+
+    .btn.danger {
+      border-color: rgba(239,68,68,.4);
+      color: #fca5a5;
+    }
+
+    .btn.google {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: #ffffff;
+      color: #12161c;
+      border: 1px solid rgba(255,255,255,.6);
+      font-weight: 600;
+    }
+
+    .btn.google:hover:not(:disabled) {
+      border-color: rgba(0,217,255,.6);
+    }
+
+    .btn.google svg {
+      width: 18px;
+      height: 18px;
+      flex: none;
+    }
+
+    .btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* SETTINGS */
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      padding: 17px 0;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .setting-row:last-child {
+      border-bottom: 0;
+    }
+
+    .setting-title {
+      font-weight: 600;
+    }
+
+    .setting-description {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+      max-width: 62ch;
+    }
+
+    /* PERMISSIONS */
+
+    .permission {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      background: rgba(255,255,255,.02);
+      gap: 15px;
+    }
+
+    .permission-status {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    /* CODE */
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      word-break: break-all;
+    }
+
+    details.user-view {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 15px;
+      background: rgba(0,0,0,.25);
+    }
+
+    details.user-view summary {
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    details.user-view pre {
+      margin-top: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #a5f3fc;
+      max-height: 320px;
+      overflow: auto;
+    }
+
+    /* LOGIN */
+
+    .login {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: #030509;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      overflow: auto;
+    }
+
+    .login.show {
+      display: grid;
+    }
+
+    .login-box {
+      width: min(430px, 100%);
+      border: 1px solid var(--border);
+      background: #0a0f17;
+      border-radius: 20px;
+      padding: 30px;
+    }
+
+    .login-box h2 {
+      margin-bottom: 8px;
+    }
+
+    .login-box p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 22px;
+      line-height: 1.55;
+    }
+
+    .login-box .field {
+      margin-bottom: 12px;
+    }
+
+    .login-box .btn {
+      width: 100%;
+      margin-top: 5px;
+    }
+
+    .login-alt {
+      margin-top: 16px;
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+
+    .login-alt > summary {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 12px;
+      list-style: none;
+    }
+
+    .login-alt > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .login-alt > summary::before {
+      content: "\25B8  ";
+      color: var(--cyan);
+    }
+
+    .login-alt[open] > summary::before {
+      content: "\25BE  ";
+    }
+
+    .login-alt > .field {
+      margin-top: 12px;
+    }
+
+    .boot {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #030509;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .boot.hidden { display: none; }
+
+    /* MOBILE */
+
+    .menu {
+      display: none;
+    }
+
+    @media (max-width: 1000px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .service-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: .25s;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main {
+        width: 100%;
+        margin-left: 0;
+        padding: 18px;
+      }
+
+      .menu {
+        display: block;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: white;
+        padding: 8px 11px;
+        border-radius: 8px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        align-items: flex-start;
+      }
+    }
+  </style>
 </head>
+
 <body>
-  <p>Opening JARVIS Admin...</p>
-  <script>
-    window.location.replace('/admin.html');
-  </script>
+
+<div class="boot" id="boot">Restoring administrator session…</div>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+
+  <aside class="sidebar" id="sidebar">
+
+    <div class="brand">
+      <div class="brand-logo">J</div>
+      <div>
+        <h1>JARVIS</h1>
+        <span>ADMIN CONTROL</span>
+      </div>
+    </div>
+
+    <div class="nav-title">Control</div>
+
+    <nav class="nav" id="nav">
+      <button data-page="dashboard" class="active">◈ Dashboard</button>
+      <button data-page="languages">◉ Languages &amp; Voices</button>
+      <button data-page="jarvis">◇ JARVIS</button>
+      <button data-page="permissions">◌ Permissions</button>
+      <button data-page="ai">◆ AI Configuration</button>
+      <button data-page="settings">⚙ Settings</button>
+    </nav>
+
+    <div class="nav-title">Session</div>
+    <div style="padding: 4px 12px; font-size: 12px; color: var(--muted);">
+      <div id="sessionWho" class="mono">not signed in</div>
+      <button class="btn danger" id="signOut" style="width:100%; margin-top:10px;">Sign out</button>
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+
+  <main class="main">
+
+    <div class="topbar">
+
+      <div>
+        <button class="menu" id="menuButton">☰</button>
+        <h2 id="pageTitle">Dashboard</h2>
+        <p id="pageDescription">JARVIS system overview and control center.</p>
+      </div>
+
+      <div class="status">
+        <span class="dot" id="connectionDot"></span>
+        <span id="connectionText">Connecting…</span>
+      </div>
+
+    </div>
+
+    <!-- DASHBOARD -->
+
+    <section class="page active" id="dashboard">
+
+      <div class="grid">
+
+        <div class="card">
+          <div class="stat-label">JARVIS</div>
+          <div class="stat-value" id="dashJarvis">—</div>
+          <div class="stat-sub" id="dashJarvisSub">Reading backend state…</div>
+        </div>
+
+        <div class="card">
+          <div class="stat-label">Active languages</div>
+          <div class="stat-value" id="dashLanguages">—</div>
+          <div class="stat-sub" id="dashLanguagesSub">Enabled rows in the database</div>
+        </div>
+
+        <div class="card">
+          <div class="stat-label">Active voices</div>
+          <div class="stat-value" id="dashVoices">—</div>
+          <div class="stat-sub" id="dashVoicesSub">Mappings the User App receives</div>
+        </div>
+
+        <div class="card">
+          <div class="stat-label">Backend</div>
+          <div class="stat-value" id="dashBackend">—</div>
+          <div class="stat-sub" id="dashBackendSub">Live probe of jarvis-health</div>
+        </div>
+
+      </div>
+
+      <div class="section card">
+
+        <div class="section-head">
+          <h3>System Services</h3>
+          <button class="btn" id="refreshDashboard">Refresh from backend</button>
+        </div>
+
+        <div class="service-list" id="serviceList">
+          <div class="service"><small>Not checked yet.</small></div>
+        </div>
+
+        <div class="message" id="dashboardMessage" role="status"></div>
+
+      </div>
+
+    </section>
+
+
+    <!-- LANGUAGES -->
+
+    <section class="page" id="languages">
+
+      <div class="card">
+
+        <div class="section-head">
+          <div>
+            <h3>Languages &amp; Voices</h3>
+            <p class="setting-description">
+              Rows in <span class="mono">public.jarvis_languages</span> and
+              <span class="mono">public.jarvis_language_voices</span>. Only enabled languages and
+              enabled voice mappings are returned to the User App. A voice ID must be the exact
+              <span class="mono">TextToSpeech.Voice.name</span> of the target device's engine; nothing
+              is ever substituted.
+            </p>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn" id="refreshLanguages">Reload from database</button>
+            <button class="btn primary" id="saveLanguages">Save Changes</button>
+          </div>
+        </div>
+
+        <div class="inline-status" id="languageStatus" role="status"></div>
+
+        <div class="language-list" id="languageList">
+          <div class="service"><small>Not loaded yet.</small></div>
+        </div>
+
+      </div>
+
+      <div class="card section">
+
+        <details class="user-view">
+          <summary>What the User App receives right now</summary>
+          <p class="setting-description" style="margin-top:10px;">
+            The public <span class="mono">jarvis-languages</span> endpoint, fetched live. This is the
+            exact configuration a User App applies — no admin-only fields, no disabled languages.
+          </p>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn" id="refreshUserView">Fetch User App configuration</button>
+            <span class="inline-status" id="userViewStatus" role="status"></span>
+          </div>
+          <pre id="userView">Not fetched yet.</pre>
+        </details>
+
+      </div>
+
+    </section>
+
+
+    <!-- JARVIS -->
+
+    <section class="page" id="jarvis">
+
+      <div class="card">
+
+        <div class="section-head">
+          <h3>JARVIS System</h3>
+          <button class="btn" id="refreshJarvis">Reload from database</button>
+        </div>
+
+        <div class="setting-row">
+
+          <div>
+            <div class="setting-title">JARVIS System</div>
+            <div class="setting-description">
+              The persistent service-wide switch, stored in
+              <span class="mono">public.jarvis_system_state</span>. Writes are restricted to an
+              authenticated account whose trusted
+              <span class="mono">app_metadata.role</span> is <span class="mono">admin</span> by
+              row-level security. The User App reads the same row.
+            </div>
+            <div class="setting-description mono" id="jarvisStateMeta">Not loaded yet.</div>
+          </div>
+
+          <label class="switch">
+            <input type="checkbox" id="jarvisSwitch">
+            <span class="slider"></span>
+          </label>
+
+        </div>
+
+        <div class="setting-row">
+
+          <div>
+            <div class="setting-title">Background Service</div>
+            <div class="setting-description">
+              No backend setting exists for this. Background execution is decided on each device by
+              its own operating system, so this page cannot report or change it.
+            </div>
+          </div>
+
+          <span class="unknown">Device-controlled</span>
+
+        </div>
+
+        <div class="message" id="jarvisMessage" role="status"></div>
+
+      </div>
+
+      <div class="card">
+
+        <div class="section-head">
+          <h3>SMS &amp; Call Assistant Policy</h3>
+          <button class="btn" id="refreshAssistantPolicy">Reload from database</button>
+        </div>
+
+        <div class="setting-description">
+          What the assistants are permitted to do, stored in
+          <span class="mono">public.jarvis_assistant_policy</span> and served to every
+          device by the <span class="mono">jarvis-languages</span> endpoint. Writes are
+          restricted by row-level security to an authenticated account whose trusted
+          <span class="mono">app_metadata.role</span> is <span class="mono">admin</span>.
+          <strong>Until this row is written these features run on their shipped defaults,
+          not on nothing</strong> - an admin switch here is what makes the matching
+          client behaviour real.
+        </div>
+
+        <h4>SMS assistant</h4>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">SMS assistant enabled</div>
+            <div class="setting-description">
+              The master switch for message announcements and replies. Off means the
+              assistant stays out of notifications entirely.
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="policySmsEnabled">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Announce incoming messages</div>
+            <div class="setting-description">Say who the message is from, without drafting a reply.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="policySmsAnnounce">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Draft replies</div>
+            <div class="setting-description">
+              Offer a draft and open the compose sheet. The user still approves the exact
+              words, and nothing is ever sent from this app.
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="policySmsReply">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Attribution text</div>
+            <div class="setting-description">
+              Appended to each draft so the recipient can tell it was dictated. Max 120
+              characters. Shown to a third party, so it is bounded in the database too.
+            </div>
+            <input class="input" type="text" id="policyAttributionText" maxlength="120">
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-description">
+              <span class="mono">confirmation_required</span> and
+              <span class="mono">attribution_enabled</span> are not shown as switches
+              because they are not negotiable: the app ignores an explicit
+              <span class="mono">false</span> for both, so a reply cannot be composed or
+              sent without the user approving it and every reply stays attributed.
+            </div>
+          </div>
+          <span class="unknown">Enforced on device</span>
+        </div>
+
+        <h4>Call assistant</h4>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Call assistant enabled</div>
+            <div class="setting-description">
+              The master switch for reacting to incoming calls. Off means JARVIS ignores
+              the phone entirely.
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="policyCallEnabled">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Announce incoming calls</div>
+            <div class="setting-description">
+              Passive: say who is calling, then wait. Turning this off also stops the
+              assistant offering an answer, because there would be nothing to answer
+              about.
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="policyCallAnnounce">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Offer to answer</div>
+            <div class="setting-description">
+              Allow &ldquo;should I answer?&rdquo; and act on the user&rsquo;s word. The
+              device also needs the Answer Phone Calls permission; where that is missing
+              the app announces without asking, rather than offering something it cannot
+              do.
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="policyCallAnswer">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Answer automatically</div>
+            <div class="setting-description">
+              <strong>The most dangerous switch on this page.</strong> On, JARVIS
+              connects a ringing call with nobody asked. Only ever turn this on for a
+              device you control. Off unless deliberately enabled.
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="policyCallAutoAnswer">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Reject automatically</div>
+            <div class="setting-description">
+              End an unanswered ringing call. This also needs the default-dialer role,
+              which this app does not request; without it the switch has no effect and
+              the app says so instead of claiming the call was rejected.
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="policyCallAutoReject">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-description">
+              <span class="mono">confirmation_required_before_answering</span> is not a
+              switch for the same reason: the user&rsquo;s word is always required before
+              a call is connected.
+            </div>
+          </div>
+          <span class="unknown">Enforced on device</span>
+        </div>
+
+        <h4>Timeouts</h4>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Draft body timeout (ms)</div>
+            <div class="setting-description">How long &ldquo;what should I say?&rdquo; stays open. 5&ndash;120000.</div>
+            <input class="input" type="number" id="policyBodyTimeout" min="5000" max="120000" step="1000">
+          </div>
+          <div>
+            <div class="setting-title">Draft confirmation timeout (ms)</div>
+            <div class="setting-description">How long the exact draft stays approvable. 5&ndash;120000.</div>
+            <input class="input" type="number" id="policyConfirmTimeout" min="5000" max="120000" step="1000">
+          </div>
+          <div>
+            <div class="setting-title">Call decision timeout (ms)</div>
+            <div class="setting-description">How long &ldquo;should I answer?&rdquo; stays open. 5&ndash;60000.</div>
+            <input class="input" type="number" id="policyCallDecisionTimeout" min="5000" max="60000" step="1000">
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-description mono" id="policyMeta">Not loaded yet.</div>
+          <button class="btn" id="saveAssistantPolicy">Save policy</button>
+        </div>
+
+        <div class="message" id="policyMessage" role="status"></div>
+
+      </div>
+
+    </section>
+
+
+    <!-- PERMISSIONS -->
+
+    <section class="page" id="permissions">
+
+      <div class="card">
+
+        <div class="section-head">
+          <div>
+            <h3>Required Permissions</h3>
+            <p class="setting-description">
+              These are User App permissions. They are reported by each device to Android, not by the
+              backend, so this page shows no status rather than an unverified one.
+            </p>
+          </div>
+        </div>
+
+        <div class="permission">
+          <div>
+            <strong>Microphone</strong>
+            <div class="setting-description">Required for voice input.</div>
+          </div>
+          <span class="permission-status">Not reported by backend</span>
+        </div>
+
+        <div class="permission">
+          <div>
+            <strong>Notifications</strong>
+            <div class="setting-description">Required for JARVIS notifications.</div>
+          </div>
+          <span class="permission-status">Not reported by backend</span>
+        </div>
+
+        <div class="permission">
+          <div>
+            <strong>Background Service</strong>
+            <div class="setting-description">Allows JARVIS to remain available.</div>
+          </div>
+          <span class="permission-status">Not reported by backend</span>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- AI -->
+
+    <section class="page" id="ai">
+
+      <div class="card">
+
+        <div class="section-head">
+          <div>
+            <h3>AI Configuration</h3>
+            <p class="setting-description">
+              Read-only report from the gateway's <span class="mono">/jarvis-health</span> endpoint.
+              Provider keys are Edge Function secrets and are deliberately not readable or writable
+              from a browser, so this page cannot change them.
+            </p>
+          </div>
+          <button class="btn" id="refreshAi">Re-check gateway</button>
+        </div>
+
+        <div class="inline-status" id="aiStatus" role="status"></div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">AI Provider</div>
+            <div class="setting-description">Provider currently selected by the gateway.</div>
+          </div>
+          <span class="mono" id="aiProvider">—</span>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Model</div>
+            <div class="setting-description">Chat and vision model reported by the gateway.</div>
+          </div>
+          <span class="mono" id="aiModel">—</span>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Search provider</div>
+            <div class="setting-description">Provider the gateway uses for web research.</div>
+          </div>
+          <span class="mono" id="aiSearch">—</span>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Configured models</div>
+            <div class="setting-description">Exactly the model IDs the gateway will accept.</div>
+          </div>
+          <span class="mono" id="aiModels">—</span>
+        </div>
+
+        <div class="message" id="aiMessage" role="status"></div>
+
+      </div>
+
+    </section>
+
+
+    <!-- SETTINGS -->
+
+    <section class="page" id="settings">
+
+      <div class="card">
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Supabase project</div>
+            <div class="setting-description">
+              The single existing project this dashboard is bound to. It is not configurable from the
+              page.
+            </div>
+          </div>
+          <span class="mono" id="settingsProject">—</span>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Public client key</div>
+            <div class="setting-description">
+              The publishable/anon key, supplied at build time by
+              <span class="mono">VITE_SUPABASE_ANON_KEY</span>. It is a public identifier, not a
+              credential; every read and write is authorised server-side by row-level security.
+              No service-role or secret key exists anywhere in this panel.
+            </div>
+          </div>
+          <span class="mono" id="settingsKey">—</span>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Sign-in method</div>
+            <div class="setting-description">
+              Supabase Auth. Google is the supported path; the authorization-code flow with PKCE
+              is used, so no client secret is needed and no token is placed in a redirect URL.
+            </div>
+          </div>
+          <span class="mono" id="settingsSignIn">—</span>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">OAuth redirect origin</div>
+            <div class="setting-description">
+              Where Google sends the browser back to. It is the origin of the running page, so the
+              same build works on production, on a preview deployment and on localhost.
+            </div>
+          </div>
+          <span class="mono" id="settingsRedirect">—</span>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Configuration source</div>
+            <div class="setting-description">
+              Every value on this site is read from the database or from a live backend probe. Nothing
+              is stored in the browser; a reload re-reads the backend.
+            </div>
+          </div>
+          <span class="online">Supabase · RLS enforced</span>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Administrator</div>
+            <div class="setting-description">
+              Verified on every sign-in and on every page load against
+              <span class="mono">/auth/v1/user</span>, which returns the trusted claims the server
+              itself reads.
+            </div>
+          </div>
+          <span class="mono" id="settingsAdmin">—</span>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Session</div>
+            <div class="setting-description" id="settingsSessionDescription">—</div>
+          </div>
+          <button class="btn" id="signOut2">Sign out</button>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+</div>
+
+
+<!-- LOGIN -->
+
+<div class="login" id="login">
+
+  <div class="login-box">
+
+    <h2>JARVIS Admin</h2>
+
+    <p>
+      Sign in with Google. Access requires an account whose trusted
+      <span class="mono">app_metadata.role</span> is <span class="mono">admin</span>; the role is
+      re-read from the server on every sign-in and page load, and every write is checked
+      again by database row-level security. Signing in with Google proves who you are — it
+      does not, on its own, grant administrative access.
+    </p>
+
+    <button class="btn google" id="googleButton" type="button">
+      <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <details class="login-alt">
+      <summary>Sign in with email and password instead</summary>
+
+      <div class="field">
+        <span>Administrator email</span>
+        <input type="email" id="loginEmail" autocomplete="username" spellcheck="false" />
+      </div>
+
+      <div class="field">
+        <span>Password</span>
+        <input type="password" id="loginPassword" autocomplete="current-password" />
+      </div>
+
+      <button class="btn primary" id="loginButton">Sign in</button>
+    </details>
+
+    <div class="message" id="loginMessage" role="status" style="margin-top:14px;"></div>
+
+  </div>
+
+</div>
+
+
+<script type="module" src="/src/main.ts"></script>
+
+
 </body>
 </html>
