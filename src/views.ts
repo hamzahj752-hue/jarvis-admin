@@ -8,7 +8,7 @@
 import { POLICY_ROW_ID, SYSTEM_STATE_ROW_ID } from "./config.ts";
 import { byId, clear, element, setInline, timestamp } from "./dom.ts";
 import { POLICY_NUMBERS, POLICY_SWITCHES } from "./assistantPolicy.ts";
-import { activeVoiceRows, state } from "./state.ts";
+import { TASK_STATUS, activeVoiceRows, state } from "./state.ts";
 import type { AssistantPolicyRow } from "./types.ts";
 
 /* -------------------------------------------------------------- dashboard ---- */
@@ -52,7 +52,7 @@ export function renderDashboard(): void {
       : `${activeVoices.length} of ${state.voices.length} stored mappings are active`;
 
   if (state.health) {
-    const ok = state.health.status === "ok";
+    const ok = state.health.status.trim().toLowerCase() === "ok";
     setStat("dashBackend", ok ? "OK" : "DEGRADED", ok ? "online" : "unknown");
     byId("dashBackendSub").textContent = `jarvis-health reported "${state.health.status}"`;
   } else {
@@ -62,8 +62,51 @@ export function renderDashboard(): void {
       : "jarvis-health has not answered";
   }
 
+  // Total Users
+  if (state.adminStats === null) {
+    setStat("dashTotalUsers", "—", "unknown");
+    byId("dashTotalUsersSub").textContent = state.adminStatsError
+      ? state.adminStatsError
+      : "Admin stats not loaded";
+  } else if (!Number.isFinite(state.adminStats.totalUsers)) {
+    setStat("dashTotalUsers", "—", "unknown");
+    byId("dashTotalUsersSub").textContent = "Admin stats returned an unexpected shape";
+  } else {
+    setStat(
+      "dashTotalUsers",
+      String(state.adminStats.totalUsers),
+      state.adminStats.totalUsers === 0 ? "unknown" : "online"
+    );
+    byId("dashTotalUsersSub").textContent = "From auth.users via service-role (admin only)";
+  }
+
+  renderTaskStatus();
   renderServices();
   renderConnection();
+}
+
+export function renderTaskStatus(): void {
+  const current = byId("taskCurrent");
+  const completed = byId("taskCompleted");
+  const remaining = byId("taskRemaining");
+  clear(current);
+  clear(completed);
+  clear(remaining);
+  for (const item of TASK_STATUS.current) {
+    current.appendChild(element("div", null, `• ${item}`));
+  }
+  for (const item of TASK_STATUS.completed) {
+    completed.appendChild(element("div", null, `• ${item}`));
+  }
+  if (TASK_STATUS.completed.length === 0) {
+    completed.appendChild(element("div", null, "• None yet"));
+  }
+  for (const item of TASK_STATUS.remaining) {
+    remaining.appendChild(element("div", null, `• ${item}`));
+  }
+  if (TASK_STATUS.remaining.length === 0) {
+    remaining.appendChild(element("div", null, "• None — production ready"));
+  }
 }
 
 function renderServices(): void {

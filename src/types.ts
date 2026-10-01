@@ -109,3 +109,8 @@ export interface AdminIdentity {
   role: string | null;
   userId: string | null;
 }
+
+/** GET /functions/v1/jarvis-admin-stats */
+export interface AdminStatsSnapshot {
+  totalUsers: number;
+}

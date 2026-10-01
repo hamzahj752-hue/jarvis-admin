@@ -260,6 +260,14 @@ export function createFakeBackend(options: { db?: FakeDb; healthStatus?: number 
 
     if (url.pathname.endsWith("/functions/v1/jarvis-languages")) return json(snapshot());
 
+    if (url.pathname.endsWith("/functions/v1/jarvis-admin-stats")) {
+      // Verify admin role via token (same as the real endpoint does)
+      if (role !== "admin") {
+        return json({ error: "forbidden", message: "Administrator access required." }, 403);
+      }
+      return json({ totalUsers: 42 });
+    }
+
     /* ------------------------------------------------------------ PostgREST ---- */
 
     if (url.pathname.includes("/rest/v1/")) {

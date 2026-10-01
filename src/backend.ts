@@ -13,7 +13,7 @@
  *     that has not been migrated yet is reported as exactly that, instead of
  *     being rendered as "no data".
  */
-import { SUPABASE_URL } from "./config.ts";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./config.ts";
 import { BackendError, statusMessage, toBackendError } from "./errors.ts";
 import { supabase } from "./supabase.ts";
 import type {
@@ -25,6 +25,7 @@ import type {
 } from "./database.types.ts";
 import type {
   AssistantPolicyRow,
+  AdminStatsSnapshot,
   HealthReport,
   LanguageRow,
   SystemStateRow,
@@ -207,6 +208,52 @@ export async function fetchHealth(): Promise<HealthReport> {
 
 export async function fetchUserAppConfiguration(): Promise<UserAppSnapshot> {
   return publicGet<UserAppSnapshot>("jarvis-languages", "Reading the User App configuration");
+}
+
+/**
+ * Fetches admin-only statistics (total user count).
+ *
+ * Called with the signed-in administrator's JWT so the edge function can
+ * verify the app_metadata.role claim. The service-role key is used only
+ * inside the edge function and never exposed to the browser.
+ */
+export async function fetchAdminStats(): Promise<AdminStatsSnapshot> {
+  const client = supabase();
+  const { data: { session } } = await client.auth.getSession();
+  if (!session?.access_token) {
+    throw new BackendError("No active session. Sign in as an administrator.", {});
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${FUNCTIONS_BASE}/jarvis-admin-stats`, {
+      method: "GET",
+      headers: {
+        accept: "application/json",
+        authorization: `Bearer ${session.access_token}`,
+        apikey: SUPABASE_ANON_KEY,
+      },
+    });
+  } catch (error) {
+    throw toBackendError(error, "Reading admin statistics");
+  }
+
+  const body = await response.text();
+  if (!response.ok) throw statusMessage(response.status, body, "Reading admin statistics");
+  try {
+    const parsed = JSON.parse(body) as Partial<AdminStatsSnapshot>;
+    if (typeof parsed.totalUsers !== "number" || !Number.isFinite(parsed.totalUsers)) {
+      throw new BackendError("Admin statistics: the backend returned an unexpected shape.", {
+        status: response.status,
+      });
+    }
+    return { totalUsers: parsed.totalUsers };
+  } catch (error) {
+    if (error instanceof BackendError) throw error;
+    throw new BackendError("Admin statistics: the backend returned a response that is not JSON.", {
+      status: response.status,
+    });
+  }
 }
 
 async function publicGet<T>(name: string, label: string): Promise<T> {

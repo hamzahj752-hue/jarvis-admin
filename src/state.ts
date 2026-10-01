@@ -8,6 +8,7 @@
  */
 import type {
   AdminIdentity,
+  AdminStatsSnapshot,
   AssistantPolicyRow,
   HealthReport,
   LanguageRow,
@@ -31,6 +32,8 @@ export interface AdminState {
   healthError: string | null;
   languagesEndpoint: UserAppSnapshot | null;
   languagesEndpointError: string | null;
+  adminStats: AdminStatsSnapshot | null;
+  adminStatsError: string | null;
   /** True while a full reload is in flight; drives the busy messages. */
   loading: boolean;
   /** True while a write is in flight; every write control is disabled. */
@@ -50,6 +53,8 @@ export const state: AdminState = {
   healthError: null,
   languagesEndpoint: null,
   languagesEndpointError: null,
+  adminStats: null,
+  adminStatsError: null,
   loading: false,
   saving: false,
 };
@@ -66,6 +71,8 @@ export function resetConfiguration(): void {
   state.healthError = null;
   state.languagesEndpoint = null;
   state.languagesEndpointError = null;
+  state.adminStats = null;
+  state.adminStatsError = null;
   state.loading = false;
   state.saving = false;
 }
@@ -74,6 +81,29 @@ export function resetConfiguration(): void {
 export function voiceRow(languageId: string, gender: string): VoiceRow | null {
   return state.voices.find((voice) => voice.language_id === languageId && voice.gender === gender) ?? null;
 }
+
+/**
+ * Release task tracker shown on the dashboard.
+ *
+ * This is the visible CURRENT / COMPLETED / REMAINING panel. Update these
+ * three lists as work lands; rendering reads them verbatim and never invents
+ * entries.
+ */
+export const TASK_STATUS: { current: string[]; completed: string[]; remaining: string[] } = {
+  current: ["Production deployment: Admin bundle + Supabase migrations/functions"],
+  completed: [
+    "Google + email login with per-user Supabase isolation (RLS)",
+    "Admin dashboard: health, languages, assistant-policy, user mirror",
+    "Hindi/English exact voice mapping with engine-default fallback",
+    "Backend error taxonomy with offline states on Android and Admin",
+    "Final polish: admin-stats auth.users count, anon apikey, health case-insensitive, task panel, Google button full-width",
+  ],
+  remaining: [
+    "Fix 27 pre-existing Android unit failures (prompt/caption/SMS-card expectations)",
+    "Create Hindi Female voice mapping in production via Admin (no placeholder IDs)",
+    "Deploy latest Admin bundle and Supabase migrations/functions",
+  ],
+};
 
 /**
  * Exactly the mappings a User App receives right now: enabled, and belonging to

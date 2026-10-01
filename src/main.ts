@@ -23,7 +23,7 @@ import {
   storedSessionKeys,
   type AuthProblem
 } from "./auth.ts";
-import { fetchAssistantPolicy, fetchHealth, fetchSystemState, fetchUserAppConfiguration, updateAssistantPolicy, updateSystemState } from "./backend.ts";
+import { fetchAdminStats, fetchAssistantPolicy, fetchHealth, fetchSystemState, fetchUserAppConfiguration, updateAssistantPolicy, updateSystemState } from "./backend.ts";
 import { POLICY_ENFORCED, POLICY_NUMBERS, POLICY_SWITCHES, parsePolicyNumber, validateAttributionText } from "./assistantPolicy.ts";
 import { PAGE_IDS, showPage } from "./navigation.ts";
 import { lockForm, readLanguageDrafts, renderLanguages, reloadLanguageRows, saveLanguages } from "./languagesView.ts";
@@ -155,7 +155,7 @@ async function reloadEverything(message?: string): Promise<void> {
   setMessage("dashboardMessage", "Loading configuration from Supabase…", "busy");
 
   try {
-    await Promise.allSettled([loadLanguageSection(), loadSystemStateSection(), loadAssistantPolicySection()]);
+    await Promise.allSettled([loadLanguageSection(), loadSystemStateSection(), loadAssistantPolicySection(), loadAdminStatsSection()]);
     const probeProblems = await refreshDashboardData();
 
     renderLanguages();
@@ -166,7 +166,7 @@ async function reloadEverything(message?: string): Promise<void> {
     /* Both sets of failures are reported together. The probe failures live on
        dashboardMessage already, and replacing them with "read successfully" here
        would report a healthy backend while its health endpoint is down. */
-    const sections = [state.languagesError, state.systemStateError, state.assistantPolicyError].filter(
+    const sections = [state.languagesError, state.systemStateError, state.assistantPolicyError, state.adminStatsError].filter(
       (value): value is string => typeof value === "string" && value.length > 0
     );
     if (sections.length > 0 || probeProblems.length > 0) {
@@ -221,6 +221,17 @@ async function loadAssistantPolicySection(): Promise<void> {
     state.assistantPolicyError = describePolicyProblem(error);
   }
   renderAssistantPolicy();
+}
+
+async function loadAdminStatsSection(): Promise<void> {
+  try {
+    state.adminStats = await fetchAdminStats();
+    state.adminStatsError = null;
+  } catch (error) {
+    state.adminStats = null;
+    state.adminStatsError = error instanceof Error ? error.message : String(error);
+  }
+  renderDashboard();
 }
 
 function describePolicyProblem(error: unknown): string {
